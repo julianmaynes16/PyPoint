@@ -3,7 +3,7 @@ import rclpy
 import datetime
 from rclpy.node import Node
 from sensor_msgs.msg import PointCloud2, Image, PointField
-import sensor_msgs.point_cloud2 as pc2
+import sensor_msgs_py.point_cloud2 as pc2
 #import sensor_msgs.point_cloud2 as pc2
 from std_msgs.msg import Header
 import numpy as np
@@ -55,7 +55,7 @@ class JPointPublisher(Node):
         for point in vertices:
             cloud_points.append([point[0], point[1], point[2]])
 
-        pointcloud_msg = create_cloud_xyz32(header, cloud_points)
+        pointcloud_msg = pc2.create_cloud_xyz32(header, cloud_points)
 
 
         # # Convert color frame to OpenCV format
