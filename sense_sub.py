@@ -18,17 +18,23 @@ class JPointSubscriber(Node):
         self.pcd = o3d.geometry.PointCloud()
 
     def sub_callback(self,msg):
-        self.get_logger().info(f"PointCloud2 fields: {msg.fields}")
-        pc_data = np.array(list(pc2.read_points(msg, field_names=("x", "y", "z"), skip_nans=True)))
+        #self.get_logger().info(f"PointCloud2 fields: {msg.fields}")
+        #pc_data = np.array(list(pc2.read_points(msg, field_names=("x", "y", "z"), skip_nans=True)))
         # print(pc_data[0][0])
-        pc_data = np.array(pc_data, dtype=np.float32)
+        pc_data = np.array(list(pc2.read_points(msg, field_names=("x", "y", "z"), skip_nans=True)), dtype=[("x", np.float32), ("y", np.float32), ("z", np.float32)])
+        points = np.column_stack((pc_data['x'], pc_data['y'], pc_data['z']))
+        self.pcd.points = o3d.utility.Vector3dVector(points)
+
         self.vis.remove_geometry(self.pcd)
-        self.pcd = o3d.geometry.PointCloud(o3d.utility.Vector3dVector(pc_data))
         self.vis.add_geometry(self.pcd)
         self.vis.poll_events()
         self.vis.update_renderer()
         
-        
+    def spin(self):
+        while rclpy.ok():
+            self.vis.poll_events()
+            self.vis.update_renderer()
+            rclpy.spin_once(self)
 
 
 
@@ -36,7 +42,7 @@ def main(args=None):
     print("Searching for node")
     rclpy.init(args=args)
     sub = JPointSubscriber()
-    rclpy.spin(sub)
+    sub.spin()
     rclpy.shutdown()
 
 if __name__ == '__main__':
