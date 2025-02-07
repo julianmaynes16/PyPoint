@@ -36,7 +36,7 @@ class JPointPublisher(Node):
         
         self.tf_broadcaster = tf2_ros.TransformBroadcaster(self)
 
-        self.timer = self.create_timer(0.1, self.publish_pointcloud)
+        self.timer = self.create_timer(0.001, self.publish_pointcloud)
 
     def publish_pointcloud(self):
         
