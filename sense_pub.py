@@ -18,8 +18,8 @@ class JPointPublisher(Node):
         super().__init__('realsense_pointcloud_publisher')
         
         # Create the publishers
-        self.pointcloud_pub = self.create_publisher(PointCloud2, 'realsense/pointcloud', 10)
-        self.color_publisher = self.create_publisher(Image, 'realsense/color_image', 10)
+        self.pointcloud_pub = self.create_publisher(PointCloud2, 'realsense/depthcloud', 10)
+        #self.color_publisher = self.create_publisher(Image, 'realsense/color_image', 10)
         
         # Start the RealSense pipeline
         self.pipe = rs.pipeline()
@@ -34,9 +34,9 @@ class JPointPublisher(Node):
         self.align = rs.align(rs.stream.color)
 
         
-        self.tf_broadcaster = tf2_ros.TransformBroadcaster(self, )
+        self.tf_broadcaster = tf2_ros.TransformBroadcaster(self)
 
-        self.timer = self.create_timer(1, self.publish_pointcloud)
+        self.timer = self.create_timer(0.1, self.publish_pointcloud)
 
     def publish_pointcloud(self):
         
@@ -51,16 +51,28 @@ class JPointPublisher(Node):
         pc.map_to(color_frame)
         vertices = np.asanyarray(points.get_vertices())
 
+        # z_values = vertices[:, 2]
+        # z_min = np.min(z_values)
+        # z_max = np.max(z_values)
+        # normalized_z = (z_values - z_min) / (z_max - z_min)
+
         header = Header()
         header.stamp = self.get_clock().now().to_msg()
         header.frame_id = "camera_link"
 
         cloud_points = []
         for point in vertices:
-            cloud_points.append([point[0], point[1], point[2]])
+            cloud_points.append([point[0], point[1], point[2], point[2]])
 
-        pointcloud_msg = pc2.create_cloud_xyz32(header, cloud_points)
 
+        fields = [
+            PointField(name="x", offset=0, datatype=PointField.FLOAT32, count=1),
+            PointField(name="y", offset=4, datatype=PointField.FLOAT32, count=1),
+            PointField(name="z", offset=8, datatype=PointField.FLOAT32, count=1),
+            PointField(name="intensity", offset=12, datatype=PointField.FLOAT32, count=1),
+        ]
+
+        pointcloud_msg = pc2.create_cloud(header, fields, cloud_points)
 
         # Publish the point cloud and the image
         self.pointcloud_pub.publish(pointcloud_msg)
